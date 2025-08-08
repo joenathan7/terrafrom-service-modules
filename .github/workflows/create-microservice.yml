@@ -1,0 +1,161 @@
+name: Create Microservice Instance
+
+on:
+  workflow_dispatch:
+    inputs:
+      service_name:
+        description: 'Name of the microservice'
+        required: true
+        type: string
+      service_type:
+        description: 'Type of service (api-service, web-service, worker-service)'
+        required: true
+        type: choice
+        options:
+          - api-service
+          - web-service
+          - worker-service
+      environment:
+        description: 'Environment (dev, staging, production)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - production
+      project_id:
+        description: 'Google Cloud Project ID'
+        required: true
+        type: string
+      region:
+        description: 'Google Cloud region'
+        required: false
+        type: string
+        default: 'us-central1'
+      domain_name:
+        description: 'Domain name (required for web-service)'
+        required: false
+        type: string
+
+jobs:
+  create-microservice:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Setup Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ inputs.project_id }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          export_default_credentials: true
+
+      - name: Configure Terraform Backend
+        run: |
+          cat > backend.tf <<EOF
+          terraform {
+            backend "gcs" {
+              bucket = "terraform-state-${inputs.project_id}"
+              prefix = "microservices/${inputs.service_name}"
+            }
+          }
+          EOF
+
+      - name: Initialize Terraform
+        working-directory: modules/${{ inputs.service_type }}
+        run: terraform init
+
+      - name: Plan Terraform Changes
+        working-directory: modules/${{ inputs.service_type }}
+        run: |
+          terraform plan \
+            -var="service_name=${{ inputs.service_name }}" \
+            -var="environment=${{ inputs.environment }}" \
+            -var="project_id=${{ inputs.project_id }}" \
+            -var="region=${{ inputs.region }}" \
+            -var="github_token=${{ secrets.GITHUB_TOKEN }}" \
+            -var="github_org=${{ github.repository_owner }}" \
+            ${{ inputs.domain_name && format('-var="domain_name={0}"', inputs.domain_name) || '' }} \
+            -out=tfplan
+
+      - name: Apply Terraform Changes
+        working-directory: modules/${{ inputs.service_type }}
+        run: terraform apply tfplan
+
+      - name: Get Outputs
+        working-directory: modules/${{ inputs.service_type }}
+        run: |
+          echo "SERVICE_REPO_URL=$(terraform output -raw service_repository_url)" >> $GITHUB_ENV
+          echo "INFRASTRUCTURE_REPO_URL=$(terraform output -raw infrastructure_repository_url)" >> $GITHUB_ENV
+          echo "LOAD_BALANCER_IP=$(terraform output -raw load_balancer_ip)" >> $GITHUB_ENV
+
+      - name: Create Service Repository Secrets
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const serviceRepoName = '${{ inputs.service_name }}-service';
+            const infrastructureRepoName = '${{ inputs.service_name }}-infrastructure';
+            
+            // Add secrets to service repository
+            await github.rest.actions.createRepoSecret({
+              owner: '${{ github.repository_owner }}',
+              repo: serviceRepoName,
+              secret_name: 'GCP_PROJECT_ID',
+              encrypted_value: '${{ inputs.project_id }}'
+            });
+            
+            await github.rest.actions.createRepoSecret({
+              owner: '${{ github.repository_owner }}',
+              repo: serviceRepoName,
+              secret_name: 'GCP_SA_KEY',
+              encrypted_value: '${{ secrets.GCP_SA_KEY }}'
+            });
+            
+            // Add secrets to infrastructure repository
+            await github.rest.actions.createRepoSecret({
+              owner: '${{ github.repository_owner }}',
+              repo: infrastructureRepoName,
+              secret_name: 'GCP_PROJECT_ID',
+              encrypted_value: '${{ inputs.project_id }}'
+            });
+            
+            await github.rest.actions.createRepoSecret({
+              owner: '${{ github.repository_owner }}',
+              repo: infrastructureRepoName,
+              secret_name: 'GCP_SA_KEY',
+              encrypted_value: '${{ secrets.GCP_SA_KEY }}'
+            });
+
+      - name: Trigger Service Repository Workflow
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: '${{ github.repository_owner }}',
+              repo: '${{ inputs.service_name }}-service',
+              workflow_id: 'deploy.yml',
+              ref: 'main'
+            });
+
+      - name: Create Summary
+        run: |
+          echo "## Microservice Creation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Service Name:** ${{ inputs.service_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Service Type:** ${{ inputs.service_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Created Repositories:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Service Repository: ${{ env.SERVICE_REPO_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Infrastructure Repository: ${{ env.INFRASTRUCTURE_REPO_URL }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Infrastructure Details:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Load Balancer IP: ${{ env.LOAD_BALANCER_IP }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Project ID: ${{ inputs.project_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Region: ${{ inputs.region }}" >> $GITHUB_STEP_SUMMARY 
