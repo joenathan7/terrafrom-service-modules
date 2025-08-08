@@ -24,23 +24,23 @@ jobs:
         with:
           terraform_version: "1.5.0"
 
-      - name: Setup Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+      # - name: Setup Google Cloud CLI
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     project_id: ${{ secrets.GCP_PROJECT_ID }}
+      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
+      #     export_default_credentials: true
 
-      - name: Configure Terraform Backend
-        run: |
-          cat > backend.tf <<EOF
-          terraform {
-            backend "gcs" {
-              bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
-              prefix = "microservices"
-            }
-          }
-          EOF
+      # - name: Configure Terraform Backend
+      #   run: |
+      #     cat > backend.tf <<EOF
+      #     terraform {
+      #       backend "gcs" {
+      #         bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
+      #         prefix = "microservices"
+      #       }
+      #     }
+      #     EOF
 
       - name: Terraform Format Check
         run: terraform fmt -check -recursive
@@ -73,23 +73,23 @@ jobs:
         with:
           terraform_version: "1.5.0"
 
-      - name: Setup Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+      # - name: Setup Google Cloud CLI
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     project_id: ${{ secrets.GCP_PROJECT_ID }}
+      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
+      #     export_default_credentials: true
 
-      - name: Configure Terraform Backend
-        run: |
-          cat > backend.tf <<EOF
-          terraform {
-            backend "gcs" {
-              bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
-              prefix = "microservices"
-            }
-          }
-          EOF
+      # - name: Configure Terraform Backend
+      #   run: |
+      #     cat > backend.tf <<EOF
+      #     terraform {
+      #       backend "gcs" {
+      #         bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
+      #         prefix = "microservices"
+      #       }
+      #     }
+      #     EOF
 
       - name: Download Terraform Plan
         uses: actions/download-artifact@v4

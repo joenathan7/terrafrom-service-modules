@@ -19,23 +19,23 @@ jobs:
         with:
           terraform_version: "1.5.0"
 
-      - name: Setup Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+      # - name: Setup Google Cloud CLI
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     project_id: ${{ secrets.GCP_PROJECT_ID }}
+      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
+      #     export_default_credentials: true
 
-      - name: Configure Terraform Backend
-        run: |
-          cat > terraform/backend.tf <<EOF
-          terraform {
-            backend "gcs" {
-              bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
-              prefix = "infrastructure/${github.repository}"
-            }
-          }
-          EOF
+      # - name: Configure Terraform Backend
+      #   run: |
+      #     cat > terraform/backend.tf <<EOF
+      #     terraform {
+      #       backend "gcs" {
+      #         bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
+      #         prefix = "infrastructure/${github.repository}"
+      #       }
+      #     }
+      #     EOF
 
       - name: Terraform Format Check
         working-directory: terraform
@@ -45,19 +45,19 @@ jobs:
         working-directory: terraform
         run: terraform init
 
-      - name: Terraform Plan
-        working-directory: terraform
-        run: |
-          terraform plan \
-            -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
-            -var="service_name=${GITHUB_REPOSITORY#*/}" \
-            -out=tfplan
+      # - name: Terraform Plan
+      #   working-directory: terraform
+      #   run: |
+      #     terraform plan \
+      #       -var="project_id=${{ secrets.GCP_PROJECT_ID }}" \
+      #       -var="service_name=${GITHUB_REPOSITORY#*/}" \
+      #       -out=tfplan
 
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan
-          path: terraform/tfplan
+      # - name: Upload Terraform Plan
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: terraform-plan
+      #     path: terraform/tfplan
 
   terraform-apply:
     runs-on: ubuntu-latest
@@ -72,23 +72,23 @@ jobs:
         with:
           terraform_version: "1.5.0"
 
-      - name: Setup Google Cloud CLI
-        uses: google-github-actions/setup-gcloud@v2
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          export_default_credentials: true
+      # - name: Setup Google Cloud CLI
+      #   uses: google-github-actions/setup-gcloud@v2
+      #   with:
+      #     project_id: ${{ secrets.GCP_PROJECT_ID }}
+      #     service_account_key: ${{ secrets.GCP_SA_KEY }}
+      #     export_default_credentials: true
 
-      - name: Configure Terraform Backend
-        run: |
-          cat > terraform/backend.tf <<EOF
-          terraform {
-            backend "gcs" {
-              bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
-              prefix = "infrastructure/${github.repository}"
-            }
-          }
-          EOF
+      # - name: Configure Terraform Backend
+      #   run: |
+      #     cat > terraform/backend.tf <<EOF
+      #     terraform {
+      #       backend "gcs" {
+      #         bucket = "terraform-state-${{ secrets.GCP_PROJECT_ID }}"
+      #         prefix = "infrastructure/${github.repository}"
+      #       }
+      #     }
+      #     EOF
 
       - name: Download Terraform Plan
         uses: actions/download-artifact@v4
@@ -102,10 +102,10 @@ jobs:
         working-directory: terraform
         run: terraform init
 
-      - name: Terraform Apply
-        working-directory: terraform
-        run: terraform apply tfplan
+      # - name: Terraform Apply
+      #   working-directory: terraform
+      #   run: terraform apply tfplan
 
-      - name: Terraform Output
-        working-directory: terraform
-        run: terraform output 
+      # - name: Terraform Output
+      #   working-directory: terraform
+      #   run: terraform output 

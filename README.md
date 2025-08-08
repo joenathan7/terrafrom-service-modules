@@ -35,25 +35,20 @@ This repository contains custom Terraform modules for microservice definitions. 
 1. Go to the Actions tab in your GitHub repository
 2. Select the "Create Microservice Instance" workflow
 3. Click "Run workflow" and configure the microservice parameters:
-   ```yaml
-   - name: Create Microservice
-     uses: ./.github/actions/create-microservice
-     with:
-       service-name: my-api-service
-       service-type: api-service
-       environment: production
-   ```
+   - **Service Name**: Name for your microservice (e.g., `my-api-service`)
+   - **Service Type**: Choose from `api-service`, `web-service`, or `worker-service`
+   - **Environment**: Choose from `dev`, `staging`, or `production`
+   - **Domain Name**: (Optional) Domain name for web services
 
 ### Available Modules
 
-- **api-service**: REST API services with load balancers and auto-scaling
-- **web-service**: Web applications with CDN and SSL certificates
-- **worker-service**: Background processing services with message queues
+- **api-service**: REST API services with GitHub repository creation
+- **web-service**: Web applications with domain support and GitHub repository creation
+- **worker-service**: Background processing services with message queue support and GitHub repository creation
 
 ## Prerequisites
 
 - Terraform >= 1.0
-- Google Cloud Platform account
 - GitHub account with repository creation permissions
 - GitHub Personal Access Token with repo scope
 

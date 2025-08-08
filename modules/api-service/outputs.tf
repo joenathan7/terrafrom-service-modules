@@ -8,27 +8,12 @@ output "infrastructure_repository_url" {
   value       = local.infrastructure_repo_url
 }
 
-output "load_balancer_ip" {
-  description = "IP address of the load balancer"
-  value       = google_compute_global_forwarding_rule.api_forwarding_rule.ip_address
+output "service_name" {
+  description = "Name of the service"
+  value       = var.service_name
 }
 
-output "instance_group_name" {
-  description = "Name of the instance group"
-  value       = google_compute_instance_group_manager.api_group.name
-}
-
-output "vpc_name" {
-  description = "Name of the VPC"
-  value       = google_compute_network.vpc.name
-}
-
-output "subnet_name" {
-  description = "Name of the subnet"
-  value       = google_compute_subnetwork.subnet.name
-}
-
-output "backend_service_name" {
-  description = "Name of the backend service"
-  value       = google_compute_backend_service.api_backend.name
+output "environment" {
+  description = "Environment"
+  value       = var.environment
 } 
